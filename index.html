@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Simple Pong Game</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Pong Game - Difficulty & Score</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="gameContainer">
-    <canvas id="pongCanvas" width="800" height="500"></canvas>
-  </div>
-  <script src="game.js"></script>
+    <div id="gameContainer">
+        <div id="difficultyMenu">
+            <label>Select Difficulty: </label>
+            <button onclick="setDifficulty('easy')">Easy</button>
+            <button onclick="setDifficulty('medium')">Medium</button>
+            <button onclick="setDifficulty('hard')">Hard</button>
+        </div>
+        <canvas id="pongCanvas" width="800" height="500" style="display:none"></canvas>
+    </div>
+    <script src="game.js"></script>
 </body>
 </html>
