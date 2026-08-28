@@ -212,6 +212,7 @@ function checkRoundEnd(lastDirection) {
             endGame(true, "You cleared all 5 levels. Great game!");
         } else {
             running = false;
+            cancelAnimationFrame(animationFrame);
             waitingForNextLevel = true;
             overlayText.textContent = `Level ${levelIndex + 1} cleared! Next: Level ${levelIndex + 2}.`;
             startBtn.textContent = "Next Level";
@@ -288,8 +289,6 @@ startBtn.addEventListener("click", () => {
         return;
     }
 
-    startBtn.textContent = "Start Game";
-    overlayText.textContent = "Touch and drag to control your paddle. Beat 5 levels.";
     startLevel(0);
 });
 
