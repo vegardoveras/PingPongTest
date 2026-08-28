@@ -19,10 +19,10 @@ Recommended flow:
 From your repository root:
 
 ```bash
-cd /home/runner/work/PingPongTest/PingPongTest
-node --check /home/runner/work/PingPongTest/PingPongTest/game.js
-node --check /home/runner/work/PingPongTest/PingPongTest/sw.js
-python3 -m http.server 8080 --directory /home/runner/work/PingPongTest/PingPongTest
+cd <repo-root>
+node --check game.js
+node --check sw.js
+python3 -m http.server 8080
 ```
 
 Then open:
