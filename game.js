@@ -15,6 +15,7 @@ const LEVELS = [
     { ballSpeed: 6.8, aiSpeed: 6.8, reaction: 0.18, winScore: 5 },
     { ballSpeed: 7.8, aiSpeed: 8.0, reaction: 0.23, winScore: 6 }
 ];
+const MAX_CANVAS_WIDTH = 460;
 
 let viewWidth = 360;
 let viewHeight = 640;
@@ -46,7 +47,7 @@ function getCurrentLevel() {
 
 function resizeCanvas() {
     const wrap = document.getElementById("gameWrap");
-    const cssWidth = Math.min(430, wrap.clientWidth || 360);
+    const cssWidth = Math.min(MAX_CANVAS_WIDTH, wrap.clientWidth || 360);
     const cssHeight = Math.round((cssWidth * 16) / 9);
     const ratio = window.devicePixelRatio || 1;
 
@@ -188,7 +189,9 @@ function update() {
         return;
     }
 
-    const targetY = ballY + ballSize / 2 - paddleHeight / 2;
+    const targetY = ballVelX > 0
+        ? ballY + ballSize / 2 - paddleHeight / 2
+        : (viewHeight - paddleHeight) / 2;
     const aiTarget = aiY + (targetY - aiY) * level.reaction;
     if (aiTarget > aiY + level.aiSpeed) {
         aiY += level.aiSpeed;
