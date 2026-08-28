@@ -86,6 +86,7 @@ function resetRound(direction = Math.random() > 0.5 ? 1 : -1) {
 }
 
 function startLevel(levelToStart = levelIndex) {
+    cancelAnimationFrame(animationFrame);
     levelIndex = levelToStart;
     waitingForNextLevel = false;
     playerScore = 0;
@@ -276,7 +277,7 @@ canvas.addEventListener("pointermove", (event) => {
 });
 
 startBtn.addEventListener("click", () => {
-    if (waitingForNextLevel && startBtn.textContent === "Next Level") {
+    if (waitingForNextLevel) {
         startLevel(levelIndex + 1);
         return;
     }
