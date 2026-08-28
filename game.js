@@ -174,7 +174,7 @@ function update() {
         ballVelY += hitPos * 2;
     }
 
-    if (ballX + ballSize < 0) {
+    if (ballX < 0) {
         aiScore += 1;
         aiScoreLabel.textContent = String(aiScore);
         checkRoundEnd(-1);
@@ -230,7 +230,7 @@ function endGame(win, message) {
     running = false;
     cancelAnimationFrame(animationFrame);
     overlayText.textContent = message;
-    startBtn.textContent = win ? "Play Again" : "Retry";
+    startBtn.textContent = win ? "Play Again" : "Restart";
     overlay.classList.add("show");
     waitingForNextLevel = false;
     if (win) {

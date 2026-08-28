@@ -5,7 +5,11 @@ const ASSETS = [
   "./style.css",
   "./game.js",
   "./manifest.webmanifest",
-  "./icon.svg"
+  "./icon.svg",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./icon-512-maskable.png",
+  "./apple-touch-icon.png"
 ];
 
 self.addEventListener("install", (event) => {
