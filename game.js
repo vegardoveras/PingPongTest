@@ -255,7 +255,9 @@ function render() {
 function gameLoop() {
     update();
     render();
-    animationFrame = requestAnimationFrame(gameLoop);
+    if (running) {
+        animationFrame = requestAnimationFrame(gameLoop);
+    }
 }
 
 function updatePlayerFromClientY(clientY) {
