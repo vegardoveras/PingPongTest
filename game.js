@@ -233,6 +233,9 @@ function checkRoundEnd(lastDirection) {
 function endGame(win, message) {
     running = false;
     cancelAnimationFrame(animationFrame);
+    if (!win) {
+        levelIndex = 0;
+    }
     overlayText.textContent = message;
     startBtn.textContent = win ? "Play Again" : "Restart";
     overlay.classList.add("show");
@@ -250,11 +253,12 @@ function render() {
     drawBall();
 
     if (serving && running) {
+        const readyFontSize = Math.max(16, Math.round(viewWidth * 0.055));
         ctx.save();
         ctx.fillStyle = "rgba(248,250,252,0.9)";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.font = "bold 20px Arial";
+        ctx.font = `bold ${readyFontSize}px Arial`;
         ctx.fillText("Get ready...", viewWidth / 2, viewHeight / 2);
         ctx.restore();
     }
