@@ -38,6 +38,7 @@ let aiScore = 0;
 let running = false;
 let animationFrame = null;
 let serving = false;
+let waitingForNextLevel = false;
 
 function getCurrentLevel() {
     return LEVELS[levelIndex];
@@ -86,6 +87,7 @@ function resetRound(direction = Math.random() > 0.5 ? 1 : -1) {
 
 function startLevel(levelToStart = levelIndex) {
     levelIndex = levelToStart;
+    waitingForNextLevel = false;
     playerScore = 0;
     aiScore = 0;
     serving = true;
@@ -206,6 +208,7 @@ function checkRoundEnd(lastDirection) {
             endGame(true, "You cleared all 5 levels. Great game!");
         } else {
             running = false;
+            waitingForNextLevel = true;
             overlayText.textContent = `Level ${levelIndex + 1} cleared! Next: Level ${levelIndex + 2}.`;
             startBtn.textContent = "Next Level";
             overlay.classList.add("show");
@@ -228,6 +231,7 @@ function endGame(win, message) {
     overlayText.textContent = message;
     startBtn.textContent = win ? "Play Again" : "Retry";
     overlay.classList.add("show");
+    waitingForNextLevel = false;
     if (win) {
         levelIndex = 0;
     }
@@ -269,17 +273,8 @@ canvas.addEventListener("pointermove", (event) => {
     updatePlayerFromClientY(event.clientY);
 });
 
-canvas.addEventListener("mousemove", (event) => {
-    updatePlayerFromClientY(event.clientY);
-});
-
 startBtn.addEventListener("click", () => {
-    if (overlay.classList.contains("show") && !running && playerScore >= getCurrentLevel().winScore && levelIndex < LEVELS.length - 1) {
-        startLevel(levelIndex + 1);
-        return;
-    }
-
-    if (startBtn.textContent === "Next Level") {
+    if (waitingForNextLevel && startBtn.textContent === "Next Level") {
         startLevel(levelIndex + 1);
         return;
     }
