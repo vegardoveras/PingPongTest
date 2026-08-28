@@ -1,0 +1,19 @@
+{
+  "name": "Pong Challenge",
+  "short_name": "Pong",
+  "description": "Single-player pong with 5 challenge levels.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1220",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

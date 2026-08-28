@@ -1,53 +1,110 @@
-const canvas = document.getElementById('pongCanvas');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("pongCanvas");
+const ctx = canvas.getContext("2d");
 
-const DIFFICULTY_SETTINGS = {
-    easy: { BALL_SPEED: 4, AI_SPEED: 5 },
-    medium: { BALL_SPEED: 6, AI_SPEED: 7 },
-    hard: { BALL_SPEED: 8, AI_SPEED: 10 }
-};
+const overlay = document.getElementById("overlay");
+const overlayText = document.getElementById("overlayText");
+const startBtn = document.getElementById("startBtn");
+const levelLabel = document.getElementById("levelLabel");
+const playerScoreLabel = document.getElementById("playerScore");
+const aiScoreLabel = document.getElementById("aiScore");
 
-let difficulty = null;
-let BALL_SPEED = 5;
-let AI_SPEED = 7;
+const LEVELS = [
+    { ballSpeed: 4.2, aiSpeed: 3.8, reaction: 0.08, winScore: 4 },
+    { ballSpeed: 5.1, aiSpeed: 4.8, reaction: 0.11, winScore: 4 },
+    { ballSpeed: 5.9, aiSpeed: 5.7, reaction: 0.14, winScore: 5 },
+    { ballSpeed: 6.8, aiSpeed: 6.8, reaction: 0.18, winScore: 5 },
+    { ballSpeed: 7.8, aiSpeed: 8.0, reaction: 0.23, winScore: 6 }
+];
 
-const PADDLE_WIDTH = 15;
-const PADDLE_HEIGHT = 100;
-const BALL_SIZE = 20;
-const PLAYER_X = 30;
-const AI_X = canvas.width - PADDLE_WIDTH - 30;
-const PADDLE_SPEED = 7;
+let viewWidth = 360;
+let viewHeight = 640;
 
-let playerY, aiY, ballX, ballY, ballVelX, ballVelY;
+let paddleWidth = 14;
+let paddleHeight = 110;
+let ballSize = 16;
+let playerX = 16;
+let aiX = viewWidth - paddleWidth - 16;
+
+let playerY = 0;
+let aiY = 0;
+let ballX = 0;
+let ballY = 0;
+let ballVelX = 0;
+let ballVelY = 0;
+
+let levelIndex = 0;
 let playerScore = 0;
 let aiScore = 0;
-let gameRunning = false;
+let running = false;
+let animationFrame = null;
+let serving = false;
 
-// Difficulty selection
-window.setDifficulty = function (level) {
-    difficulty = level;
-    BALL_SPEED = DIFFICULTY_SETTINGS[level].BALL_SPEED;
-    AI_SPEED = DIFFICULTY_SETTINGS[level].AI_SPEED;
-    document.getElementById('difficultyMenu').style.display = 'none';
-    canvas.style.display = 'block';
-    startGame();
-};
+function getCurrentLevel() {
+    return LEVELS[levelIndex];
+}
 
-function startGame() {
+function resizeCanvas() {
+    const wrap = document.getElementById("gameWrap");
+    const cssWidth = Math.min(430, wrap.clientWidth || 360);
+    const cssHeight = Math.round((cssWidth * 16) / 9);
+    const ratio = window.devicePixelRatio || 1;
+
+    canvas.style.width = `${cssWidth}px`;
+    canvas.style.height = `${cssHeight}px`;
+    canvas.width = Math.round(cssWidth * ratio);
+    canvas.height = Math.round(cssHeight * ratio);
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+    viewWidth = cssWidth;
+    viewHeight = cssHeight;
+
+    paddleWidth = Math.max(10, viewWidth * 0.03);
+    paddleHeight = Math.min(120, Math.max(90, viewHeight * 0.17));
+    ballSize = Math.max(12, viewWidth * 0.045);
+    playerX = Math.max(12, viewWidth * 0.04);
+    aiX = viewWidth - paddleWidth - playerX;
+
+    playerY = clamp(playerY || viewHeight / 2, 0, viewHeight - paddleHeight);
+    aiY = clamp(aiY || viewHeight / 2, 0, viewHeight - paddleHeight);
+    ballX = clamp(ballX || viewWidth / 2, 0, viewWidth - ballSize);
+    ballY = clamp(ballY || viewHeight / 2, 0, viewHeight - ballSize);
+}
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
+function resetRound(direction = Math.random() > 0.5 ? 1 : -1) {
+    const level = getCurrentLevel();
+    playerY = (viewHeight - paddleHeight) / 2;
+    aiY = (viewHeight - paddleHeight) / 2;
+    ballX = (viewWidth - ballSize) / 2;
+    ballY = (viewHeight - ballSize) / 2;
+    ballVelX = level.ballSpeed * direction;
+    ballVelY = (Math.random() * 2 - 1) * level.ballSpeed;
+}
+
+function startLevel(levelToStart = levelIndex) {
+    levelIndex = levelToStart;
     playerScore = 0;
     aiScore = 0;
-    resetPositions();
-    gameRunning = true;
+    serving = true;
+    levelLabel.textContent = String(levelIndex + 1);
+    playerScoreLabel.textContent = "0";
+    aiScoreLabel.textContent = "0";
+    resetRound();
+    running = true;
+
+    overlay.classList.remove("show");
+    serveDelay();
     gameLoop();
 }
 
-function resetPositions() {
-    playerY = (canvas.height - PADDLE_HEIGHT) / 2;
-    aiY = (canvas.height - PADDLE_HEIGHT) / 2;
-    ballX = canvas.width / 2 - BALL_SIZE / 2;
-    ballY = canvas.height / 2 - BALL_SIZE / 2;
-    ballVelX = BALL_SPEED * (Math.random() > 0.5 ? 1 : -1);
-    ballVelY = BALL_SPEED * (Math.random() * 2 - 1);
+function serveDelay() {
+    serving = true;
+    setTimeout(() => {
+        serving = false;
+    }, 550);
 }
 
 function drawRect(x, y, w, h, color) {
@@ -55,120 +112,189 @@ function drawRect(x, y, w, h, color) {
     ctx.fillRect(x, y, w, h);
 }
 
-function drawCircle(x, y, r, color) {
-    ctx.fillStyle = color;
+function drawBall() {
+    ctx.fillStyle = "#e2e8f0";
     ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.closePath();
+    ctx.arc(ballX + ballSize / 2, ballY + ballSize / 2, ballSize / 2, 0, Math.PI * 2);
     ctx.fill();
 }
 
-function drawNet() {
-    ctx.strokeStyle = "#fff";
-    ctx.setLineDash([10, 15]);
+function drawCenterLine() {
+    ctx.strokeStyle = "rgba(148,163,184,0.45)";
+    ctx.setLineDash([8, 12]);
     ctx.beginPath();
-    ctx.moveTo(canvas.width / 2, 0);
-    ctx.lineTo(canvas.width / 2, canvas.height);
+    ctx.moveTo(viewWidth / 2, 0);
+    ctx.lineTo(viewWidth / 2, viewHeight);
     ctx.stroke();
     ctx.setLineDash([]);
 }
 
-function drawScoreboard() {
-    ctx.font = "32px Arial";
-    ctx.fillStyle = "#fff";
-    ctx.textAlign = "center";
-    ctx.fillText(playerScore, canvas.width / 4, 50);
-    ctx.fillText(aiScore, 3 * canvas.width / 4, 50);
-    ctx.font = "18px Arial";
-    ctx.fillStyle = "#ccc";
-    ctx.fillText("Player", canvas.width / 4, 80);
-    ctx.fillText("AI", 3 * canvas.width / 4, 80);
-}
+function update() {
+    if (!running || serving) return;
 
-function resetBall(scoredBy) {
-    if (scoredBy === 'player') playerScore++;
-    if (scoredBy === 'ai') aiScore++;
-    ballX = canvas.width / 2 - BALL_SIZE / 2;
-    ballY = canvas.height / 2 - BALL_SIZE / 2;
-    ballVelX = BALL_SPEED * (Math.random() > 0.5 ? 1 : -1);
-    ballVelY = BALL_SPEED * (Math.random() * 2 - 1);
-}
-
-function gameLoop() {
-    if (!gameRunning) return;
+    const level = getCurrentLevel();
 
     ballX += ballVelX;
     ballY += ballVelY;
 
-    // Ball collision with top/bottom walls
     if (ballY <= 0) {
         ballY = 0;
-        ballVelY = -ballVelY;
-    }
-    if (ballY + BALL_SIZE >= canvas.height) {
-        ballY = canvas.height - BALL_SIZE;
-        ballVelY = -ballVelY;
+        ballVelY *= -1;
+    } else if (ballY + ballSize >= viewHeight) {
+        ballY = viewHeight - ballSize;
+        ballVelY *= -1;
     }
 
-    // Ball collision with player paddle
     if (
-        ballX <= PLAYER_X + PADDLE_WIDTH &&
-        ballX >= PLAYER_X &&
-        ballY + BALL_SIZE >= playerY &&
-        ballY <= playerY + PADDLE_HEIGHT
+        ballX <= playerX + paddleWidth &&
+        ballX + ballSize >= playerX &&
+        ballY + ballSize >= playerY &&
+        ballY <= playerY + paddleHeight
     ) {
-        ballX = PLAYER_X + PADDLE_WIDTH;
-        ballVelX = -ballVelX;
-        let collidePoint = (ballY + BALL_SIZE / 2) - (playerY + PADDLE_HEIGHT / 2);
-        ballVelY += collidePoint * 0.15;
+        ballX = playerX + paddleWidth;
+        const hitPos = (ballY + ballSize / 2 - (playerY + paddleHeight / 2)) / (paddleHeight / 2);
+        const speed = Math.min(Math.abs(ballVelX) * 1.05, level.ballSpeed * 1.9);
+        ballVelX = speed;
+        ballVelY += hitPos * 2.2;
     }
 
-    // Ball collision with AI paddle
     if (
-        ballX + BALL_SIZE >= AI_X &&
-        ballX + BALL_SIZE <= AI_X + PADDLE_WIDTH &&
-        ballY + BALL_SIZE >= aiY &&
-        ballY <= aiY + PADDLE_HEIGHT
+        ballX + ballSize >= aiX &&
+        ballX <= aiX + paddleWidth &&
+        ballY + ballSize >= aiY &&
+        ballY <= aiY + paddleHeight
     ) {
-        ballX = AI_X - BALL_SIZE;
-        ballVelX = -ballVelX;
-        let collidePoint = (ballY + BALL_SIZE / 2) - (aiY + PADDLE_HEIGHT / 2);
-        ballVelY += collidePoint * 0.15;
+        ballX = aiX - ballSize;
+        const hitPos = (ballY + ballSize / 2 - (aiY + paddleHeight / 2)) / (paddleHeight / 2);
+        const speed = Math.min(Math.abs(ballVelX) * 1.04, level.ballSpeed * 1.9);
+        ballVelX = -speed;
+        ballVelY += hitPos * 2;
     }
 
-    // Ball out of bounds (score)
-    if (ballX < 0) {
-        resetBall('ai');
-    } else if (ballX > canvas.width) {
-        resetBall('player');
+    if (ballX + ballSize < 0) {
+        aiScore += 1;
+        aiScoreLabel.textContent = String(aiScore);
+        checkRoundEnd(-1);
+        return;
     }
 
-    // AI paddle movement (difficulty based)
-    let aiCenter = aiY + PADDLE_HEIGHT / 2;
-    let ballCenter = ballY + BALL_SIZE / 2;
-    if (aiCenter < ballCenter - 10) {
-        aiY += AI_SPEED;
-    } else if (aiCenter > ballCenter + 10) {
-        aiY -= AI_SPEED;
+    if (ballX > viewWidth) {
+        playerScore += 1;
+        playerScoreLabel.textContent = String(playerScore);
+        checkRoundEnd(1);
+        return;
     }
-    aiY = Math.max(0, Math.min(canvas.height - PADDLE_HEIGHT, aiY));
 
-    // Draw everything
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawNet();
-    drawScoreboard();
-    drawRect(PLAYER_X, playerY, PADDLE_WIDTH, PADDLE_HEIGHT, "#fff");
-    drawRect(AI_X, aiY, PADDLE_WIDTH, PADDLE_HEIGHT, "#fff");
-    drawCircle(ballX + BALL_SIZE / 2, ballY + BALL_SIZE / 2, BALL_SIZE / 2, "#fff");
+    const targetY = ballY + ballSize / 2 - paddleHeight / 2;
+    const aiTarget = aiY + (targetY - aiY) * level.reaction;
+    if (aiTarget > aiY + level.aiSpeed) {
+        aiY += level.aiSpeed;
+    } else if (aiTarget < aiY - level.aiSpeed) {
+        aiY -= level.aiSpeed;
+    } else {
+        aiY = aiTarget;
+    }
 
-    requestAnimationFrame(gameLoop);
+    aiY = clamp(aiY, 0, viewHeight - paddleHeight);
 }
 
-// Mouse control for player paddle
-canvas.addEventListener("mousemove", function (e) {
-    if (!gameRunning) return;
+function checkRoundEnd(lastDirection) {
+    const level = getCurrentLevel();
+
+    if (playerScore >= level.winScore) {
+        if (levelIndex === LEVELS.length - 1) {
+            endGame(true, "You cleared all 5 levels. Great game!");
+        } else {
+            running = false;
+            overlayText.textContent = `Level ${levelIndex + 1} cleared! Next: Level ${levelIndex + 2}.`;
+            startBtn.textContent = "Next Level";
+            overlay.classList.add("show");
+        }
+        return;
+    }
+
+    if (aiScore >= level.winScore) {
+        endGame(false, `AI won Level ${levelIndex + 1}. Try again!`);
+        return;
+    }
+
+    resetRound(-lastDirection);
+    serveDelay();
+}
+
+function endGame(win, message) {
+    running = false;
+    cancelAnimationFrame(animationFrame);
+    overlayText.textContent = message;
+    startBtn.textContent = win ? "Play Again" : "Retry";
+    overlay.classList.add("show");
+    if (win) {
+        levelIndex = 0;
+    }
+}
+
+function render() {
+    ctx.clearRect(0, 0, viewWidth, viewHeight);
+    drawCenterLine();
+    drawRect(playerX, playerY, paddleWidth, paddleHeight, "#38bdf8");
+    drawRect(aiX, aiY, paddleWidth, paddleHeight, "#f8fafc");
+    drawBall();
+
+    if (serving && running) {
+        ctx.fillStyle = "rgba(248,250,252,0.9)";
+        ctx.textAlign = "center";
+        ctx.font = "bold 20px Arial";
+        ctx.fillText("Get ready...", viewWidth / 2, viewHeight / 2);
+    }
+}
+
+function gameLoop() {
+    update();
+    render();
+    animationFrame = requestAnimationFrame(gameLoop);
+}
+
+function updatePlayerFromClientY(clientY) {
     const rect = canvas.getBoundingClientRect();
-    const mouseY = e.clientY - rect.top;
-    playerY = mouseY - PADDLE_HEIGHT / 2;
-    playerY = Math.max(0, Math.min(canvas.height - PADDLE_HEIGHT, playerY));
+    const y = clientY - rect.top;
+    playerY = clamp(y - paddleHeight / 2, 0, viewHeight - paddleHeight);
+}
+
+canvas.addEventListener("pointerdown", (event) => {
+    updatePlayerFromClientY(event.clientY);
+    canvas.setPointerCapture(event.pointerId);
 });
+
+canvas.addEventListener("pointermove", (event) => {
+    updatePlayerFromClientY(event.clientY);
+});
+
+canvas.addEventListener("mousemove", (event) => {
+    updatePlayerFromClientY(event.clientY);
+});
+
+startBtn.addEventListener("click", () => {
+    if (overlay.classList.contains("show") && !running && playerScore >= getCurrentLevel().winScore && levelIndex < LEVELS.length - 1) {
+        startLevel(levelIndex + 1);
+        return;
+    }
+
+    if (startBtn.textContent === "Next Level") {
+        startLevel(levelIndex + 1);
+        return;
+    }
+
+    startBtn.textContent = "Start Game";
+    overlayText.textContent = "Touch and drag to control your paddle. Beat 5 levels.";
+    startLevel(0);
+});
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+render();
+
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+    });
+}
