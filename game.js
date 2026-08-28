@@ -249,11 +249,13 @@ function render() {
     drawBall();
 
     if (serving && running) {
+        ctx.save();
         ctx.fillStyle = "rgba(248,250,252,0.9)";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.font = "bold 20px Arial";
         ctx.fillText("Get ready...", viewWidth / 2, viewHeight / 2);
+        ctx.restore();
     }
 }
 
